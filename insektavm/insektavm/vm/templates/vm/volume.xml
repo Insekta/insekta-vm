@@ -1,0 +1,11 @@
+<volume>
+    <name>{{ name }}</name>
+    <capacity>{{ capacity }}</capacity>
+    <target>
+        <format type='qcow2' />
+    </target>
+    <backingStore>
+        <path>{{ backing_image }}</path>
+        <format type='qcow2' />
+    </backingStore>
+</volume>

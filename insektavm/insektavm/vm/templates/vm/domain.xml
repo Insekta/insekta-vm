@@ -1,0 +1,22 @@
+<domain type="kvm">
+    <name>{{ name }}</name>
+    <description>{{ description }}</description>
+    <memory unit="M">{{ memory }}</memory>
+    <vcpu>1</vcpu>
+    <os>
+        <type arch="x86_64">hvm</type>
+    </os>
+    <devices>
+        <disk type="file" device="disk">
+            <driver name="qemu" type="qcow2" />
+            <source file="{{ volume }}" />
+            <target dev="vda" bus="virtio" />
+        </disk>
+		<interface type="network">
+			<source network="{{ network }}"/>
+            <mac address="{{ mac }}" />
+			<model type="virtio" />
+		</interface>
+        <graphics type="vnc" port="-1" autoport="yes" keymap="en-us" />
+    </devices>
+</domain>
