@@ -1,3 +1,5 @@
+import hashlib
+
 import libvirt
 from django.db import models
 from django.template.loader import render_to_string
@@ -6,6 +8,9 @@ from insektavm.base.virt import connections
 from insektavm.base.models import UserToken
 from insektavm.resources.models import Resource
 from insektavm.network.models import NetworkRange, Network
+
+
+CHUNK_SIZE = 8096
 
 
 class VMTemplate(models.Model):
@@ -20,6 +25,51 @@ class VMTemplate(models.Model):
 
     def get_image_filename(self):
         return 'backing-{}.qcow2'.format(self.image_fingerprint)
+
+    @classmethod
+    def from_image(cls, resource, name, memory, order_id, image_filename):
+        file_size = 0
+        h = hashlib.sha256()
+        with open(image_filename, 'rb') as f:
+            while True:
+                data = f.read(CHUNK_SIZE)
+                if not data:
+                    break
+                file_size += len(data)
+                h.update(data)
+        image_fingerprint = h.hexdigest()
+
+        vm_template = cls(resource=resource,
+                          name=name,
+                          memory=memory,
+                          image_fingerprint=image_fingerprint,
+                          order_id=order_id)
+        vm_template.save()
+        volume_name = vm_template.get_image_filename()
+
+        virtconn = connections['default']
+        pool = virtconn.storagePoolLookupByName('insekta')
+        volume_xml = render_to_string('vm/backing_volume.xml', {
+            'name': volume_name,
+            'capacity': file_size
+        })
+        try:
+            volume = pool.createXML(volume_xml)
+        except libvirt.libvirtError as e:
+            if e.get_error_code() == libvirt.VIR_ERR_STORAGE_VOL_EXIST:
+                return vm_template
+            raise
+        stream = virtconn.newStream()
+        volume.upload(stream, offset=0, length=file_size)
+        with open(image_filename, 'rb') as f:
+            while True:
+                data = f.read(CHUNK_SIZE)
+                if not data:
+                    stream.finish()
+                    break
+                stream.send(data)
+
+        return vm_template
 
 
 class ActiveVMResource(models.Model):
