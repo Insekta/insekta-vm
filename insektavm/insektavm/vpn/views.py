@@ -9,6 +9,7 @@ from django.db import transaction
 
 from insektavm.base.models import UserToken
 from insektavm.vpn.models import AssignedIPAddress
+from insektavm.vpn.signals import VPNSender, ip_assigned, ip_unassigned
 
 
 @require_POST
@@ -38,6 +39,8 @@ def api_assign_ip(request):
     except AssignedIPAddress.DoesNotExist:
         AssignedIPAddress.objects.create(user_token=user_token, ip_address=ip_address)
 
+    ip_assigned.send_robust(VPNSender, user_token=user_token, ip_address=ip_address)
+
     return HttpResponse(json.dumps({
         'result': 'ok'
     }), content_type='application/json')
@@ -57,6 +60,7 @@ def api_unassign_ip(request):
         pass
     else:
         AssignedIPAddress.objects.filter(user_token=user_token).delete()
+        ip_unassigned.send_robust(VPNSender, user_token=user_token)
 
     return HttpResponse(json.dumps({
         'result': 'ok'
