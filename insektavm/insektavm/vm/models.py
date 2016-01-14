@@ -10,7 +10,8 @@ from insektavm.base.virt import connections
 from insektavm.base.models import UserToken
 from insektavm.resources.models import Resource
 from insektavm.network.models import NetworkRange, Network
-
+from insektavm.vpn.models import AssignedIPAddress
+from insektavm.vpn.signals import ip_assigned, ip_unassigned
 
 CHUNK_SIZE = 8096
 
@@ -120,6 +121,12 @@ class ActiveVMResource(models.Model):
             vm.save()
             vm.libvirt_create(network_name, mac)
 
+        try:
+            ip = AssignedIPAddress.objects.get(user_token=self.user_token).ip_address
+            self.network.grant_access(ip)
+        except AssignedIPAddress.DoesNotExist:
+            pass
+
     def stop(self):
         self._stop()
         self.is_started = False
@@ -141,6 +148,7 @@ class ActiveVMResource(models.Model):
         for vm in vms:
             vm.libvirt_destroy()
             vm.delete()
+        self.network.revoke_access()
         self.network.free()
 
     def _ping(self):
@@ -230,3 +238,17 @@ class VirtualMachine(models.Model):
 
     def get_volume_name(self):
         return 'vmimage_{}.qcow2'.format(self.pk)
+
+
+def _callback_ip_assigned(sender, user_token, ip_address, **kwargs):
+    for vm_res in ActiveVMResource.objects.filter(user_token=user_token, is_started=True):
+        vm_res.network.grant_access(ip_address)
+
+
+def _callback_ip_unassigned(sender, user_token, **kwargs):
+    for vm_res in ActiveVMResource.objects.filter(user_token=user_token, is_started=True):
+        vm_res.network.revoke_access()
+
+
+ip_assigned.connect(_callback_ip_assigned)
+ip_unassigned.connect(_callback_ip_unassigned)
