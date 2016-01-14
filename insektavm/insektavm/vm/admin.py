@@ -23,13 +23,12 @@ class VMTemplateAdmin(admin.ModelAdmin):
         if request.method == 'POST':
             form = AddVmForm(request.POST)
             if form.is_valid():
-                mib = 1024 * 1024
                 image_filename = os.path.join(settings.VM_IMAGE_DIR,
                                               form.cleaned_data['filename'])
                 vm_template = VMTemplate.from_image(
                     resource=form.cleaned_data['resource'],
                     name=form.cleaned_data['name'],
-                    memory=form.cleaned_data['memory'] * mib,
+                    memory=form.cleaned_data['memory'],
                     order_id=form.cleaned_data['order_id'],
                     image_filename=image_filename)
                 messages.success(request, 'VM Template successfully added.')
