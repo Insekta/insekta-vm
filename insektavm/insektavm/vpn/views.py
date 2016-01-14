@@ -1,34 +1,33 @@
-import json
-
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_ipv4_address
-from django.http import HttpResponseBadRequest, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.db import transaction
 
 from insektavm.base.models import UserToken
+from insektavm.base.restapi import ApiError, rest_api
 from insektavm.vpn.models import AssignedIPAddress
 from insektavm.vpn.signals import VPNSender, ip_assigned, ip_unassigned
 
 
 @require_POST
-@csrf_exempt
+@rest_api
 def api_assign_ip(request):
     try:
         username = request.POST['username']
     except KeyError:
-        return HttpResponseBadRequest('Parameter username is required.')
+        raise ApiError('Parameter username is required.', HttpResponseBadRequest)
 
     try:
         ip_address = request.POST['ip_address']
     except KeyError:
-        return HttpResponseBadRequest('Parameter ip_address is required.')
+        raise ApiError('Parameter ip_address is required.', HttpResponseBadRequest)
 
     try:
         validate_ipv4_address(ip_address)
     except ValidationError:
-        return HttpResponseBadRequest('Parameter ip_address is not a valid IPv4 address.')
+        raise ApiError('Parameter ip_address is not a valid IPv4 address.',
+                       HttpResponseBadRequest)
 
     user_token, created = UserToken.objects.get_or_create(username=username)
     try:
@@ -41,18 +40,18 @@ def api_assign_ip(request):
 
     ip_assigned.send_robust(VPNSender, user_token=user_token, ip_address=ip_address)
 
-    return HttpResponse(json.dumps({
+    return {
         'result': 'ok'
-    }), content_type='application/json')
+    }
 
 
 @require_POST
-@csrf_exempt
+@rest_api
 def api_unassign_ip(request):
     try:
         username = request.POST['username']
     except KeyError:
-        return HttpResponseBadRequest('Parameter username is required.')
+        raise ApiError('Parameter username is required.', HttpResponseBadRequest)
 
     try:
         user_token = UserToken.objects.get(username=username)
@@ -62,6 +61,6 @@ def api_unassign_ip(request):
         AssignedIPAddress.objects.filter(user_token=user_token).delete()
         ip_unassigned.send_robust(VPNSender, user_token=user_token)
 
-    return HttpResponse(json.dumps({
+    return {
         'result': 'ok'
-    }), content_type='application/json')
+    }
