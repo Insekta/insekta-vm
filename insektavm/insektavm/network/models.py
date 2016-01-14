@@ -1,4 +1,6 @@
 import ipaddress
+import subprocess
+import os
 
 import libvirt
 from django.core.exceptions import ValidationError
@@ -7,6 +9,9 @@ from django.db.models.signals import post_save
 from django.template.loader import render_to_string
 
 from insektavm.base.virt import connections
+
+
+SCRIPT_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'scripts')
 
 
 class IPv4NetworkField(models.Field):
@@ -147,6 +152,19 @@ class Network(models.Model):
         self.in_use = False
         self.libvirt_destroy()
         self.save()
+
+    def grant_access(self, ip_address):
+        return self._run_script('grant_access.sh', [str(self.network), str(ip_address)])
+
+    def revoke_access(self):
+        return self._run_script('revoke_access.sh', [str(self.network)])
+
+    def _run_script(self, script_name, params):
+        script = os.path.join(SCRIPT_DIR, script_name)
+        return subprocess.call([script] + params,
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+
 
 
 post_save.connect(NetworkRange.post_save, sender=NetworkRange)
