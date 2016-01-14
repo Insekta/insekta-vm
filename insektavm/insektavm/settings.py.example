@@ -128,3 +128,5 @@ STATIC_URL = '/static/'
 LIBVIRT_NODES = {
     'default': 'qemu:///system'
 }
+
+VM_IMAGE_DIR = os.path.join(BASE_DIR, 'vm-images')
