@@ -2,71 +2,95 @@ import calendar
 import json
 
 from django.http import HttpResponseBadRequest, HttpResponseNotFound, HttpResponse
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 from insektavm.base.models import UserToken
+from insektavm.base.restapi import ApiError, rest_api
 from insektavm.resources.models import Resource
 from insektavm.vm.models import ActiveVMResource
 
 
 @require_POST
-@csrf_exempt
+@rest_api
 def api_start_vm(request):
-    resource, user_token = _api_get_parameters(request)
+    resource, user_token = _api_get_parameters(request.POST)
     vm_res = ActiveVMResource.start_for(resource, user_token)
-    return HttpResponse(json.dumps({
-        'id': vm_res.pk,
-        'expire': calendar.timegm(vm_res.expire_time.utctimetuple()),
-        'virtual_machines': vm_res.get_vms()
-    }), content_type='application/json')
+    return _vm_res_json(vm_res)
 
 
 @require_POST
-@csrf_exempt
+@rest_api
 def api_stop_vm(request):
-    resource, user_token = _api_get_parameters(request)
+    resource, user_token = _api_get_parameters(request.POST)
     try:
         vm_res = ActiveVMResource.objects.get(resource=resource, user_token=user_token)
     except ActiveVMResource.DoesNotExist:
-        return HttpResponseNotFound('No such network is running')
+        raise ApiError('No such network is running', HttpResponseNotFound)
     vm_res.destroy()
-    return HttpResponse(json.dumps({
+    return {
         'result': 'ok'
-    }), content_type='application/json')
+    }
 
 
 @require_POST
-@csrf_exempt
+@rest_api
 def api_ping_vm(request):
-    resource, user_token = _api_get_parameters(request)
+    resource, user_token = _api_get_parameters(request.POST)
     try:
         vm_res = ActiveVMResource.objects.get(resource=resource, user_token=user_token)
     except ActiveVMResource.DoesNotExist:
-        return HttpResponseNotFound('No such network is running')
+        raise ApiError('No such network is running', HttpResponseNotFound)
     expire_time = vm_res.ping()
-    return HttpResponse(json.dumps({
+    return {
         'id': vm_res.pk,
-        'expire': calendar.timegm(expire_time.utctimetuple())
-    }), content_type='application/json')
+        'expire': _to_timestamp(expire_time)
+    }
 
 
-def _api_get_parameters(request):
+@require_GET
+@rest_api
+def api_get_vm_status(request):
+    resource, user_token = _api_get_parameters(request.GET)
     try:
-        resource_str = request.POST['resource']
-    except KeyError:
-        return HttpResponseBadRequest('Require resource parameter.')
+        vm_res = ActiveVMResource.objects.get(resource=resource, user_token=user_token)
+        status = 'running'
+        resource = _vm_res_json(vm_res)
+    except ActiveVMResource.DoesNotExist:
+        status = 'notrunning'
+        resource = None
+    return {
+        'status': status,
+        'resource': resource
+    }
+
+
+def _api_get_parameters(params):
     try:
-        username = request.POST['username']
+        resource_str = params['resource']
     except KeyError:
-        return HttpResponseBadRequest('Require username parameter')
+        raise ApiError('Require resource parameter.', HttpResponseBadRequest)
+    try:
+        username = params['username']
+    except KeyError:
+        raise ApiError('Require username parameter.', HttpResponseBadRequest)
 
     try:
         resource = Resource.objects.get(name=resource_str, type='vmnet')
     except Resource.DoesNotExist:
-        return HttpResponseNotFound('No such resource: {}'.format(resource_str))
+        raise ApiError('No such resource: {}'.format(resource_str), HttpResponseNotFound)
 
     user_token, created = UserToken.objects.get_or_create(username=username)
 
     return resource, user_token
+
+
+def _vm_res_json(vm_res):
+    return {
+        'id': vm_res.pk,
+        'expire': _to_timestamp(vm_res.expire_time),
+        'virtual_machines': vm_res.get_vms()
+    }
+
+
+def _to_timestamp(expire_time):
+    return calendar.timegm(expire_time.utctimetuple())
