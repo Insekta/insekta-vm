@@ -42,7 +42,7 @@ def api_ping_vm(request):
     expire_time = vm_res.ping()
     return {
         'id': vm_res.pk,
-        'expire': _to_timestamp(expire_time)
+        'expire_time': _to_timestamp(expire_time)
     }
 
 
@@ -86,7 +86,7 @@ def _api_get_parameters(params):
 def _vm_res_json(vm_res):
     return {
         'id': vm_res.pk,
-        'expire': _to_timestamp(vm_res.expire_time),
+        'expire_time': _to_timestamp(vm_res.expire_time),
         'virtual_machines': vm_res.get_vms()
     }
 
