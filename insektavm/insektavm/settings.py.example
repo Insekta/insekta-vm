@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'insektavm.resources',
     'insektavm.network',
     'insektavm.vm',
+    'insektavm.vpn',
 
 ]
 

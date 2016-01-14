@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from insektavm.vpn.models import AssignedIPAddress
+
+
+admin.site.register(AssignedIPAddress)
