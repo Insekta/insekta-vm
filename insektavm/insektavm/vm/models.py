@@ -1,8 +1,10 @@
+from datetime import timedelta
 import hashlib
 
 import libvirt
-from django.db import models
+from django.db import models, transaction
 from django.template.loader import render_to_string
+from django.utils.timezone import now
 
 from insektavm.base.virt import connections
 from insektavm.base.models import UserToken
@@ -86,12 +88,30 @@ class ActiveVMResource(models.Model):
         return '{} for {}'.format(self.resource, self.user_token)
 
     def start(self):
-        if self.is_started:
-            return
-        network = NetworkRange.objects.get(name='default').get_free_network()
-        network.libvirt_create()
-        network_name = network.libvirt_get_name()
-        macs = network.get_macs()
+        # Make sure just one process is starting this VM
+        if self.pk:
+            with transaction.atomic():
+                vm_res = ActiveVMResource.objects.select_for_update().get(pk=self.pk)
+                # Some other process was faster
+                if vm_res.is_started:
+                    return
+                vm_res.is_started = True
+                vm_res._ping()
+                vm_res.save()
+
+        self._ping()
+        self.is_started = True
+
+        self.network = NetworkRange.objects.get(name='default').get_free_network()
+
+        # We save it now because:
+        # 1) we don't want to loose information if something with libvirt fails
+        # 2) we want to make sure the object is in the database so others can relate to it.
+        self.save()
+
+        self.network.libvirt_create()
+        network_name = self.network.libvirt_get_name()
+        macs = self.network.get_macs()
         vm_templates = VMTemplate.objects.filter(resource=self.resource).order_by('order_id')
         for vm_template, mac in zip(vm_templates, macs):
             vm = VirtualMachine(vm_resource=self,
@@ -99,10 +119,22 @@ class ActiveVMResource(models.Model):
                                 backing_image=vm_template.image_fingerprint)
             vm.save()
             vm.libvirt_create(network_name, mac)
-        self.is_started = True
-        self.save()
 
     def stop(self):
+        self._stop()
+        self.is_started = False
+        self.save()
+
+    def destroy(self):
+        self._stop()
+        self.delete()
+
+    def ping(self):
+        self._ping()
+        self.save()
+        return self.expire_time
+
+    def _stop(self):
         if not self.is_started:
             raise ValueError('VM Resource is not started yet.')
         vms = VirtualMachine.objects.filter(vm_resource=self)
@@ -110,8 +142,30 @@ class ActiveVMResource(models.Model):
             vm.libvirt_destroy()
             vm.delete()
         self.network.free()
-        self.is_started = False
-        self.save()
+
+    def _ping(self):
+        self.expire_time = now() + timedelta(minutes=30)
+
+    def get_vms(self):
+        vm_objs = (VirtualMachine.objects.filter(vm_resource=self)
+                   .select_related('template')
+                   .order_by('template__order_id'))
+        vms = []
+        for vm_obj, ip in zip(vm_objs, self.network.get_vm_ips()):
+            vms.append({
+                'name': vm_obj.template.name,
+                'ip': str(ip)
+            })
+        return vms
+
+    @classmethod
+    def start_for(cls, resource, user_token):
+        try:
+            vm_res = cls.objects.get(resource=resource, user_token=user_token)
+        except cls.DoesNotExist:
+            vm_res = cls(resource=resource, user_token=user_token)
+        vm_res.start()
+        return vm_res
 
 
 class VirtualMachine(models.Model):

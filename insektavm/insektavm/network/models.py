@@ -139,6 +139,10 @@ class Network(models.Model):
         return ['{}:{:0>2x}:{:0>2x}:{:0>2x}'.format(kvm_prefix, pk_higher, pk_lower, i)
                 for i in range(self.network.num_addresses)]
 
+    def get_vm_ips(self):
+        # First host is the gateway, last host might be a user
+        return list(self.network.hosts())[1:-1]
+
     def free(self):
         self.in_use = False
         self.libvirt_destroy()
