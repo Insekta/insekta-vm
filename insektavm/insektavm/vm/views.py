@@ -1,7 +1,6 @@
 import calendar
-import json
 
-from django.http import HttpResponseBadRequest, HttpResponseNotFound, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponseNotFound
 from django.views.decorators.http import require_POST, require_GET
 
 from insektavm.base.models import UserToken
