@@ -30,6 +30,12 @@ def api_assign_ip(request):
                        HttpResponseBadRequest)
 
     user_token, created = UserToken.objects.get_or_create(username=username)
+
+    # Try to unassign the IP address first if it belongs to another user,
+    # in case we lost some notification
+    _unassign_ip(ip_address)
+
+    # Now save the user -> ip mapping or update it
     try:
         with transaction.atomic():
             a = AssignedIPAddress.objects.select_for_update().get(user_token=user_token)
@@ -48,19 +54,37 @@ def api_assign_ip(request):
 @require_POST
 @rest_api
 def api_unassign_ip(request):
+    # Unassign via user
     try:
         username = request.POST['username']
-    except KeyError:
-        raise ApiError('Parameter username is required.', HttpResponseBadRequest)
-
-    try:
         user_token = UserToken.objects.get(username=username)
-    except UserToken.DoesNotExist:
+    except (KeyError, UserToken.DoesNotExist):
         pass
     else:
         AssignedIPAddress.objects.filter(user_token=user_token).delete()
         ip_unassigned.send_robust(VPNSender, user_token=user_token)
 
+    # Unassign via IP
+    try:
+        ip_address = request.POST['ip_address']
+        validate_ipv4_address(ip_address)
+    except ValidationError:
+        raise ApiError('Parameter ip_address is not a valid IPv4 address.',
+                       HttpResponseBadRequest)
+    except KeyError:
+        pass
+    else:
+        _unassign_ip(ip_address)
+
     return {
         'result': 'ok'
     }
+
+
+def _unassign_ip(ip_address):
+    try:
+        a = AssignedIPAddress.objects.select_related().get(ip_address=ip_address)
+        a.delete()
+        ip_unassigned.send_robust(VPNSender, user_token=a.user_token)
+    except AssignedIPAddress.DoesNotExist:
+        pass
