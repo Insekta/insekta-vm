@@ -1,3 +1,4 @@
+import hashlib
 import ipaddress
 import subprocess
 import os
@@ -112,6 +113,7 @@ class Network(models.Model):
         net = virtconn.networkDefineXML(network_xml)
         net.setAutostart(True)
         net.create()
+        self.libvirt_create_nwfilter()
         return net
 
     def libvirt_destroy(self):
@@ -132,6 +134,33 @@ class Network(models.Model):
             net.undefine()
         except libvirt.libvirtError:
             pass
+        self.libvirt_destroy_nwfilter()
+
+    def libvirt_get_nwfilter_name(self):
+        return 'vmnetnwfilter_{}'.format(self.pk)
+
+    def libvirt_create_nwfilter(self, ip_address=None):
+        name = self.libvirt_get_nwfilter_name()
+        h = hashlib.sha256(name.encode()).hexdigest()
+        uuid = '{}-{}-{}-{}-{}'.format(h[0:8], h[8:12], h[12:16], h[16:20], h[20:32])
+        nwfilter_xml = render_to_string('network/nwfilter.xml', {
+            'name': name,
+            'uuid': uuid,
+            'ip_address': ip_address,
+            'network_address': str(self.network.network_address),
+            'network_mask': str(self.network.netmask),
+        })
+        virtconn = connections['default']
+        return virtconn.nwfilterDefineXML(nwfilter_xml)
+
+    def libvirt_destroy_nwfilter(self):
+        virtconn = connections['default']
+        try:
+            f = virtconn.nwfilterLookupByName(self.libvirt_get_nwfilter_name())
+        except libvirt.libvirtError:
+            pass
+        else:
+            f.undefine()
 
     def get_macs(self):
         if self.network.num_addresses > 256:
@@ -155,17 +184,10 @@ class Network(models.Model):
         self.save()
 
     def grant_access(self, ip_address):
-        return self._run_script('grant_access.sh', [str(self.network), str(ip_address)])
+        self.libvirt_create_nwfilter(str(ip_address))
 
     def revoke_access(self):
-        return self._run_script('revoke_access.sh', [str(self.network)])
-
-    def _run_script(self, script_name, params):
-        script = os.path.join(SCRIPT_DIR, script_name)
-        return subprocess.call([script] + params,
-                               stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL)
-
+        self.libvirt_create_nwfilter()
 
 
 post_save.connect(NetworkRange.post_save, sender=NetworkRange)

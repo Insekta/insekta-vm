@@ -111,7 +111,6 @@ class ActiveVMResource(models.Model):
         self.save()
 
         self.network.libvirt_create()
-        network_name = self.network.libvirt_get_name()
         macs = self.network.get_macs()
         vm_templates = VMTemplate.objects.filter(resource=self.resource).order_by('order_id')
         for vm_template, mac in zip(vm_templates, macs):
@@ -119,7 +118,7 @@ class ActiveVMResource(models.Model):
                                 template=vm_template,
                                 backing_image=vm_template.image_fingerprint)
             vm.save()
-            vm.libvirt_create(network_name, mac)
+            vm.libvirt_create(self.network, mac)
 
         try:
             ip = AssignedIPAddress.objects.get(user_token=self.user_token).ip_address
@@ -201,12 +200,15 @@ class VirtualMachine(models.Model):
         image = pool.createXML(volume_xml)
         image_filename = image.path()
         vm_tpl = self.template
+        network_name = network.libvirt_get_name()
+        nwfilter_name = network.libvirt_get_nwfilter_name()
         domain_xml =  render_to_string('vm/domain.xml', {
             'name': self.get_domain_name(),
             'volume': image_filename,
             'memory': vm_tpl.memory,
-            'network': network,
-            'mac': mac
+            'network': network_name,
+            'mac': mac,
+            'nwfilter_name': nwfilter_name
         })
         dom = virtconn.defineXML(domain_xml)
         dom.setAutostart(1)

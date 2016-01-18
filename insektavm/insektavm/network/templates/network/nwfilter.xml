@@ -1,0 +1,4 @@
+<filter name="{{ name }}">
+  <uuid>{{ uuid }}</uuid>
+  <filterref filter="clean-traffic"/>
+</filter>
