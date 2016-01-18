@@ -7,6 +7,7 @@ from insektavm.base.models import UserToken
 from insektavm.base.restapi import ApiError, rest_api
 from insektavm.resources.models import Resource
 from insektavm.vm.models import ActiveVMResource
+from insektavm.vpn.models import AssignedIPAddress
 
 
 @require_POST
@@ -57,9 +58,16 @@ def api_get_vm_status(request):
     except ActiveVMResource.DoesNotExist:
         status = 'notrunning'
         resource = None
+
+    try:
+        vpn_ip = AssignedIPAddress.objects.get(user_token=user_token).ip_address
+    except AssignedIPAddress.DoesNotExist:
+        vpn_ip = None
+
     return {
         'status': status,
-        'resource': resource
+        'resource': resource,
+        'vpn_ip': vpn_ip
     }
 
 

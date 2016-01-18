@@ -157,12 +157,11 @@ class ActiveVMResource(models.Model):
         vm_objs = (VirtualMachine.objects.filter(vm_resource=self)
                    .select_related('template')
                    .order_by('template__order_id'))
-        vms = []
+        vms = {}
         for vm_obj, ip in zip(vm_objs, self.network.get_vm_ips()):
-            vms.append({
-                'name': vm_obj.template.name,
+            vms[vm_obj.template.name] = {
                 'ip': str(ip)
-            })
+            }
         return vms
 
     @classmethod
