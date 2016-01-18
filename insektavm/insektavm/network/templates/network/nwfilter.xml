@@ -1,4 +1,13 @@
-<filter name="{{ name }}">
-  <uuid>{{ uuid }}</uuid>
-  <filterref filter="clean-traffic"/>
+<filter name="{{ name }}" chain="ipv4">
+    <uuid>{{ uuid }}</uuid>
+    <filterref filter="clean-traffic"/>
+    {% if ip_address %}
+    <rule action="accept" direction="in">
+        <ip srcipaddr="{{ ip_address }}"/>
+    </rule>
+    <rule action="accept" direction="out">
+        <ip dstipaddr="{{ ip_address }}"/>
+    </rule>
+    {% endif %}
+    <rule action="drop" direction="inout"/>
 </filter>
