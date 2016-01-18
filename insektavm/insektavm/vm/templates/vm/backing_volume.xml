@@ -2,6 +2,6 @@
     <name>{{ name }}</name>
     <capacity>{{ capacity }}</capacity>
     <target>
-        <format type='qcow2' />
+        <format type='qcow2'/>
     </target>
 </volume>

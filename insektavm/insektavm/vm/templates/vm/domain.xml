@@ -8,15 +8,15 @@
     </os>
     <devices>
         <disk type="file" device="disk">
-            <driver name="qemu" type="qcow2" />
-            <source file="{{ volume }}" />
-            <target dev="vda" bus="virtio" />
+            <driver name="qemu" type="qcow2"/>
+            <source file="{{ volume }}"/>
+            <target dev="vda" bus="virtio"/>
         </disk>
-		<interface type="network">
-			<source network="{{ network }}"/>
-            <mac address="{{ mac }}" />
-			<model type="virtio" />
-		</interface>
-        <graphics type="vnc" port="-1" autoport="yes" keymap="en-us" />
+        <interface type="network">
+            <source network="{{ network }}"/>
+            <mac address="{{ mac }}"/>
+            <model type="virtio"/>
+        </interface>
+        <graphics type="vnc" port="-1" autoport="yes" keymap="en-us"/>
     </devices>
 </domain>

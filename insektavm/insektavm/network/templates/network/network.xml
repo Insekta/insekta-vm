@@ -2,9 +2,9 @@
     <name>{{ name }}</name>
     <ip address="{{ network_gateway }}" netmask="{{ network_mask }}">
         <dhcp>
-            <range start="{{ dhcp_range_start}}" end="{{ dhcp_range_end }}" />
+            <range start="{{ dhcp_range_start }}" end="{{ dhcp_range_end }}"/>
             {% for host in hosts %}
-            <host mac="{{ host.mac }}" name="{{ host.name }}" ip="{{ host.addr }}" />
+                <host mac="{{ host.mac }}" name="{{ host.name }}" ip="{{ host.addr }}"/>
             {% endfor %}
         </dhcp>
     </ip>
