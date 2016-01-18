@@ -1,5 +1,6 @@
 <network>
     <name>{{ name }}</name>
+    <forward mode="route"/>
     <ip address="{{ network_gateway }}" netmask="{{ network_mask }}">
         <dhcp>
             <range start="{{ dhcp_range_start }}" end="{{ dhcp_range_end }}"/>
