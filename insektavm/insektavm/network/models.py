@@ -103,8 +103,9 @@ class Network(models.Model):
         network_xml = render_to_string('network/network.xml', {
             'name': 'vmnet_{}'.format(self.pk),
             'hosts': vm_hosts,
-            'network_gateway': str(network_gateway),
+            'network_address': str(self.network.network_address),
             'network_mask': str(self.network.netmask),
+            'network_gateway': str(network_gateway),
             'dhcp_range_start': first_host,
             'dhcp_range_end': last_host
         })
