@@ -9,5 +9,11 @@
         <ip dstipaddr="{{ ip_address }}"/>
     </rule>
     {% endif %}
+    <rule action="accept" direction="in">
+        <ip srcipaddr="{{ network_address }}" srcipmask="{{ network_mask }}"/>
+    </rule>
+    <rule action="accept" direction="out">
+        <ip dstipaddr="{{ network_address }}" dstipmask="{{ network_mask }}"/>
+    </rule>
     <rule action="drop" direction="inout"/>
 </filter>
