@@ -173,6 +173,14 @@ class ActiveVMResource(models.Model):
         vm_res.start()
         return vm_res
 
+    @classmethod
+    def destroy_expired(cls):
+        num_destroyed = 0
+        for vm_res in cls.objects.filter(expire_time__lt=now()):
+            vm_res.destroy()
+            num_destroyed += 1
+        return num_destroyed
+
 
 class VirtualMachine(models.Model):
     vm_resource = models.ForeignKey(ActiveVMResource)
