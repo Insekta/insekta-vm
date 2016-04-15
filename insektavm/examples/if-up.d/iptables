@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ "$IFACE" != "tun0" ]; then
+  exit 0
+fi
+
+if [ "$MODE" != "start" ]; then
+  exit 0
+fi
+
+iptables -I FORWARD 1 -o tun0 -s 10.37.0.0/20 -j ACCEPT
+iptables -I FORWARD 1 -i tun0 -d 10.37.0.0/20 -j ACCEPT
