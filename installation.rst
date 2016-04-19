@@ -41,7 +41,18 @@ The libvirt packages need to be set up on the machine.
 
 A storage pool called *insekta* needs to be created. The vm images are placed in that pool. One way to achieve tat is by using virt-manager. It can be used on a remote host also.
 
+If insekta is ran by a non-root user (which it should), that user needs to be added to the group libvirt.
+
 Setting up iptables
 -------------------
 
 iptables needs to be set up in order to forward traffic from vpn to libvirt. An example configuration can be found in the examples directory. This can be placed in */etc/network/if-up.d*.
+
+Additionally, the following command needs to be ran once:
+
+| sysctl -w net.ipv4.ip_forward=1
+
+Setting up Django as a daemon
+-----------------------------
+
+
