@@ -17,6 +17,26 @@ Additionally, the option *copy cpu information* needs to be enabled in the vm co
 Actual installation process
 ===========================
 
+Required packages
+-----------------
+
+A plain debian installation required the following packages:
+
+* build-essential
+* libvirt-bin
+* libvirt-dev
+* qemu-kvm
+* git  (optional; zum Klonen des Codes)
+* virtualenv
+* python-libvirt
+* python3-libvirt
+* python3
+* python3-dev
+* python-dev
+* pkg-config
+
+* openvpn
+
 Cloning the source code
 -----------------------
 
@@ -26,6 +46,8 @@ OpenVPN configuration
 ---------------------
 
 Copy the *openvpn* directory from *examples* to */etc/openvpn*.
+
+Additionally, you need to uncomment the line AUTOSTART="all" in /etc/default/openvpn
 
 Generating CA and server key using easy-rsa
 -------------------------------------------
