@@ -24,7 +24,7 @@ class VMTemplate(models.Model):
     order_id = models.IntegerField()
 
     def __str__(self):
-        return self.name
+        return '{} ({})'.format(self.name, self.resource)
 
     def get_image_filename(self):
         return 'backing-{}.qcow2'.format(self.image_fingerprint)
