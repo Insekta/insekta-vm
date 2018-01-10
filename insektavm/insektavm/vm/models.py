@@ -243,7 +243,7 @@ class VirtualMachine(models.Model):
         vol.delete()
 
     def get_domain_name(self):
-        return 'vm_{}'.format(self.pk)
+        return 'insekta_vm_{}'.format(self.pk)
 
     def get_volume_name(self):
         return 'vmimage_{}.qcow2'.format(self.pk)

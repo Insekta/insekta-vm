@@ -78,7 +78,7 @@ class Network(models.Model):
         return str(self.network)
 
     def libvirt_get_name(self):
-        return 'vmnet_{}'.format(self.pk)
+        return 'insekta_vmnet_{}'.format(self.pk)
 
     def libvirt_create(self):
         virtconn = connections['default']
