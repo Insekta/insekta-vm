@@ -102,7 +102,7 @@ class Network(models.Model):
                 'name': 'vm{}'.format(str(i).zfill(2))
             })
         network_xml = render_to_string('network/network.xml', {
-            'name': 'vmnet_{}'.format(self.pk),
+            'name': self.libvirt_get_name(),
             'hosts': vm_hosts,
             'network_address': str(self.network.network_address),
             'network_mask': str(self.network.netmask),
