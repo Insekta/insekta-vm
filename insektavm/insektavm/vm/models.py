@@ -17,7 +17,7 @@ CHUNK_SIZE = 8096
 
 
 class VMTemplate(models.Model):
-    resource = models.ForeignKey(Resource)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     name = models.CharField(max_length=40)
     memory = models.IntegerField()
     image_fingerprint = models.CharField(max_length=64)
@@ -76,9 +76,9 @@ class VMTemplate(models.Model):
 
 
 class ActiveVMResource(models.Model):
-    resource = models.ForeignKey(Resource)
-    user_token = models.ForeignKey(UserToken)
-    network = models.ForeignKey(Network)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    user_token = models.ForeignKey(UserToken, on_delete=models.CASCADE)
+    network = models.ForeignKey(Network, on_delete=models.CASCADE)
     expire_time = models.DateTimeField()
     is_started = models.BooleanField(default=False)
 
@@ -183,8 +183,8 @@ class ActiveVMResource(models.Model):
 
 
 class VirtualMachine(models.Model):
-    vm_resource = models.ForeignKey(ActiveVMResource)
-    template = models.ForeignKey(VMTemplate)
+    vm_resource = models.ForeignKey(ActiveVMResource, on_delete=models.CASCADE)
+    template = models.ForeignKey(VMTemplate, on_delete=models.CASCADE)
     backing_image = models.CharField(max_length=64)
 
 

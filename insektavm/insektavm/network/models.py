@@ -71,7 +71,7 @@ class NetworkRange(models.Model):
 
 class Network(models.Model):
     network = IPv4NetworkField()
-    range = models.ForeignKey(NetworkRange, related_name='subnet')
+    range = models.ForeignKey(NetworkRange, related_name='subnet', on_delete=models.CASCADE)
     in_use = models.BooleanField(default=False)
 
     def __str__(self):
