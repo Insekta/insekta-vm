@@ -122,8 +122,9 @@ class Network(models.Model):
         try:
             net = virtconn.networkLookupByName(network_name)
         except libvirt.libvirtError as e:
-            if e.get_error_code() == libvirt.VIR_ERR_NO_NETWORK:
+            if e.get_error_code() != libvirt.VIR_ERR_NO_NETWORK:
                 raise
+            self.libvirt_destroy_nwfilter()
             return
 
         try:
