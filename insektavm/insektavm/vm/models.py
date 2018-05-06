@@ -147,7 +147,6 @@ class ActiveVMResource(models.Model):
         for vm in vms:
             vm.libvirt_destroy()
             vm.delete()
-        self.network.revoke_access()
         self.network.free()
 
     def _ping(self):
