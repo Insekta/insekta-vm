@@ -3,9 +3,19 @@
     <description>{{ description }}</description>
     <memory unit="M">{{ memory }}</memory>
     <vcpu>1</vcpu>
+
     <os>
-        <type arch="x86_64">hvm</type>
+        <type arch='x86_64' machine='pc-i440fx-2.8'>hvm</type>
+        <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.fd</loader>
+        <boot dev='hd'/>
     </os>
+
+    <features>
+        <acpi/>
+        <apic/>
+        <vmport state='off'/>
+    </features>
+
     <devices>
         <disk type="file" device="disk">
             <driver name="qemu" type="qcow2"/>
