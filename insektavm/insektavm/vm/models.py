@@ -232,7 +232,7 @@ class VirtualMachine(models.Model):
         except libvirt.libvirtError as e:
             # FIXME: Check error code
             pass
-        dom.undefine()
+        dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_NVRAM)
         pool = virtconn.storagePoolLookupByName('insekta')
         try:
             vol = pool.storageVolLookupByName(self.get_volume_name())
