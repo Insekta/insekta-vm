@@ -1,0 +1,16 @@
+[Unit]
+Description=Insekta Virtual Machine Service
+After=network.target postgresql.service
+
+[Service]
+User=insekta
+Group=insekta
+WorkingDirectory=/home/insekta/insekta-vm/insektavm
+Environment=VIRTUAL_ENV="/home/insekta/insekta-vm/insektavm/venv"
+Environment=PATH="/home/insekta/insekta-vm/insektavm/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/home/insekta/insekta-vm/insektavm/venv/bin/gunicorn -w 2 -t 120 -b 127.0.0.1:8106 --error-logfile /home/insekta/insekta-vm/error.log insektavm.wsgi:application
+PrivateTmp=true
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
