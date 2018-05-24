@@ -17,7 +17,7 @@ class VMTemplateAdmin(admin.ModelAdmin):
             resource = forms.ModelChoiceField(Resource.objects.all())
             name = forms.CharField(max_length=40)
             memory = forms.IntegerField(initial=128, help_text='MiB')
-            boot_type = forms.ChoiceField(choices=['efi', 'mbr'])
+            boot_type = forms.CharField(max_length=8, default='efi')
             order_id = forms.IntegerField(initial=1)
             filename = forms.ChoiceField(choices=filename_choices)
 
