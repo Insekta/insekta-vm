@@ -20,7 +20,7 @@ class VMTemplate(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     name = models.CharField(max_length=40)
     memory = models.IntegerField()
-    boot_type = models.CharField(default='efi', choices=(('efi', 'EFI boot'), ('mbr', 'MBR boot')))
+    boot_type = models.CharField(max_length=8, default='efi', choices=(('efi', 'EFI boot'), ('mbr', 'MBR boot')))
     image_fingerprint = models.CharField(max_length=64)
     order_id = models.IntegerField()
 
