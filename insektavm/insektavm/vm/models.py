@@ -20,6 +20,7 @@ class VMTemplate(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     name = models.CharField(max_length=40)
     memory = models.IntegerField()
+    boot_type = models.CharField(max_length=8, default='efi')
     image_fingerprint = models.CharField(max_length=64)
     order_id = models.IntegerField()
 
@@ -212,6 +213,7 @@ class VirtualMachine(models.Model):
             'name': self.get_domain_name(),
             'volume': image_filename,
             'memory': vm_tpl.memory,
+            'boot_type': vm_tpl.boot_type,
             'network': network_name,
             'mac': mac,
             'nwfilter_name': nwfilter_name

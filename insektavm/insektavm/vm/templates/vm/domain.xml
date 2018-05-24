@@ -5,9 +5,13 @@
     <vcpu>1</vcpu>
 
     <os>
+        {% if boot_type == "efi" %}
         <type arch='x86_64' machine='pc-i440fx-2.8'>hvm</type>
         <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE.fd</loader>
         <boot dev='hd'/>
+        {% else %}
+        <type arch='x86_64'>hvm</type>
+        {% endif %}
     </os>
 
     <features>
