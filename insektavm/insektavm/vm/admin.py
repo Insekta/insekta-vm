@@ -30,6 +30,7 @@ class VMTemplateAdmin(admin.ModelAdmin):
                     resource=form.cleaned_data['resource'],
                     name=form.cleaned_data['name'],
                     memory=form.cleaned_data['memory'],
+                    boot_type=form.cleaned_data['boot_type'],
                     order_id=form.cleaned_data['order_id'],
                     image_filename=image_filename)
                 messages.success(request, 'VM Template successfully added.')

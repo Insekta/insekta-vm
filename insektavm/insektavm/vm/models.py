@@ -31,7 +31,7 @@ class VMTemplate(models.Model):
         return 'backing-{}.qcow2'.format(self.image_fingerprint)
 
     @classmethod
-    def from_image(cls, resource, name, memory, order_id, image_filename):
+    def from_image(cls, resource, name, memory, boot_type, order_id, image_filename):
         file_size = 0
         h = hashlib.sha256()
         with open(image_filename, 'rb') as f:
@@ -46,6 +46,7 @@ class VMTemplate(models.Model):
         vm_template = cls(resource=resource,
                           name=name,
                           memory=memory,
+                          boot_type=boot_type,
                           image_fingerprint=image_fingerprint,
                           order_id=order_id)
         vm_template.save()
