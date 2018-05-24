@@ -144,10 +144,15 @@ class Network(models.Model):
         name = self.libvirt_get_nwfilter_name()
         h = hashlib.sha256(name.encode()).hexdigest()
         uuid = '{}-{}-{}-{}-{}'.format(h[0:8], h[8:12], h[12:16], h[16:20], h[20:32])
+        hosts = self.network.hosts()
+        dhcp_server = next(hosts)
+        network_ips = list(hosts)
         nwfilter_xml = render_to_string('network/nwfilter.xml', {
             'name': name,
             'uuid': uuid,
             'ip_address': ip_address,
+            'dhcp_server': str(dhcp_server),
+            'network_ips': network_ips,
             'network_address': str(self.network.network_address),
             'network_mask': str(self.network.netmask),
         })

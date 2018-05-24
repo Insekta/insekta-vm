@@ -1,6 +1,20 @@
 <filter name="{{ name }}" chain="ipv4">
     <uuid>{{ uuid }}</uuid>
-    <filterref filter="clean-traffic"/>
+    {% if dhcp_server %}
+    <filterref filter="allow-dhcp-server">
+        <parameter name="DHCPSERVER" value="{{ dhcp_server }}"/>
+    </filterref>
+    {% endif %}
+    <filterref filter="clean-traffic">
+    {% for ip in network_ips %}
+        <parameter name="IP" value="{{ ip }}"/>
+    {% empty %}<!-- DHCP Snooping / IP Learning is unreliable -->
+        <parameter name="CTRL_IP_LEARNING" value="dhcp"/>
+        {% if dhcp_server %}
+        <parameter name="DHCPSERVER" value="{{ dhcp_server }}"/>
+        {% endif %}
+    {% endfor %}
+    </filterref>
     {% if ip_address %}
     <rule action="accept" direction="in">
         <ip srcipaddr="{{ ip_address }}"/>
@@ -15,5 +29,6 @@
     <rule action="accept" direction="out">
         <ip dstipaddr="{{ network_address }}" dstipmask="{{ network_mask }}"/>
     </rule>
+    <!-- drop all other traffic -->
     <rule action="drop" direction="inout"/>
 </filter>
