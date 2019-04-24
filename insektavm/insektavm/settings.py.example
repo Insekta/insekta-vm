@@ -129,6 +129,8 @@ LIBVIRT_NODES = {
     'default': 'qemu:///system'
 }
 
+LIBVIRT_PREFIX = ''
+
 VM_IMAGE_DIR = os.path.join(BASE_DIR, 'vm-images')
 
 API_AUTH = ('api', 'mypassword')

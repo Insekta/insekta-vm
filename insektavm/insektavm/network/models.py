@@ -78,7 +78,7 @@ class Network(models.Model):
         return str(self.network)
 
     def libvirt_get_name(self):
-        return 'insekta_vmnet_{}'.format(self.pk)
+        return '{}insekta_vmnet_{}'.format(settings.LIBVIRT_PREFIX, self.pk)
 
     def libvirt_create(self):
         virtconn = connections['default']
@@ -138,7 +138,7 @@ class Network(models.Model):
         self.libvirt_destroy_nwfilter()
 
     def libvirt_get_nwfilter_name(self):
-        return 'vmnetnwfilter_{}'.format(self.pk)
+        return '{}vmnetnwfilter_{}'.format(settings.LIBVIRT_PREFIX, self.pk)
 
     def libvirt_create_nwfilter(self, ip_address=None):
         name = self.libvirt_get_nwfilter_name()

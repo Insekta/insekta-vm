@@ -1,5 +1,6 @@
 from datetime import timedelta
 import hashlib
+import re
 
 import libvirt
 from django.db import models, transaction
@@ -14,6 +15,7 @@ from insektavm.vpn.models import AssignedIPAddress
 from insektavm.vpn.signals import ip_assigned, ip_unassigned
 
 CHUNK_SIZE = 8096
+STORAGE_POOL_NAME = settings.LIBVIRT_PREFIX + 'insekta'
 
 
 class VMTemplate(models.Model):
@@ -28,7 +30,11 @@ class VMTemplate(models.Model):
         return '{} ({})'.format(self.name, self.resource)
 
     def get_image_filename(self):
-        return 'backing-{}.qcow2'.format(self.image_fingerprint)
+        resource_name = re.sub(r'[^\w_]', '', self.resource_name.strip().lower())
+        resource_name = re.sub(r'[\s-]+', '_', resource.name)
+        return '{}backing-{}-{}.qcow2'.format(settings.LIBVIRT_PREFIX,
+                                              resource_name,
+                                              self.image_fingerprint)
 
     @classmethod
     def from_image(cls, resource, name, memory, boot_type, order_id, image_filename):
@@ -53,7 +59,7 @@ class VMTemplate(models.Model):
         volume_name = vm_template.get_image_filename()
 
         virtconn = connections['default']
-        pool = virtconn.storagePoolLookupByName('insekta')
+        pool = virtconn.storagePoolLookupByName(STORAGE_POOL_NAME)
         volume_xml = render_to_string('vm/backing_volume.xml', {
             'name': volume_name,
             'capacity': file_size
@@ -194,7 +200,7 @@ class VirtualMachine(models.Model):
 
     def libvirt_create(self, network, mac):
         virtconn = connections['default']
-        pool = virtconn.storagePoolLookupByName('insekta')
+        pool = virtconn.storagePoolLookupByName(STORAGE_POOL_NAME)
         backing_image_filename = self.template.get_image_filename()
         backing_vol = pool.storageVolLookupByName(backing_image_filename)
         backing_image_path = backing_vol.path()
@@ -236,7 +242,7 @@ class VirtualMachine(models.Model):
             # FIXME: Check error code
             pass
         dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_NVRAM)
-        pool = virtconn.storagePoolLookupByName('insekta')
+        pool = virtconn.storagePoolLookupByName(STORAGE_POOL_NAME)
         try:
             vol = pool.storageVolLookupByName(self.get_volume_name())
         except libvirt.libvirtError:
@@ -245,10 +251,10 @@ class VirtualMachine(models.Model):
         vol.delete()
 
     def get_domain_name(self):
-        return 'insekta_vm_{}'.format(self.pk)
+        return '{}insekta_vm_{}'.format(settings.LIBVIRT_PREFIX, self.pk)
 
     def get_volume_name(self):
-        return 'vmimage_{}.qcow2'.format(self.pk)
+        return '{}vmimage_{}.qcow2'.format(settings.LIBVIRT_PREFIX, self.pk)
 
 
 def _callback_ip_assigned(sender, user_token, ip_address, **kwargs):
