@@ -6,6 +6,7 @@ import libvirt
 from django.db import models, transaction
 from django.template.loader import render_to_string
 from django.utils.timezone import now
+from django.conf import settings
 
 from insektavm.base.virt import connections
 from insektavm.base.models import UserToken
@@ -30,8 +31,8 @@ class VMTemplate(models.Model):
         return '{} ({})'.format(self.name, self.resource)
 
     def get_image_filename(self):
-        resource_name = re.sub(r'[^\w_]', '', self.resource_name.strip().lower())
-        resource_name = re.sub(r'[\s-]+', '_', resource.name)
+        resource_name = re.sub(r'[^\w_]', '', self.resource.name.strip().lower())
+        resource_name = re.sub(r'[\s-]+', '_', resource_name)
         return '{}backing-{}-{}.qcow2'.format(settings.LIBVIRT_PREFIX,
                                               resource_name,
                                               self.image_fingerprint)
