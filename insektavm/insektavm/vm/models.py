@@ -20,7 +20,7 @@ STORAGE_POOL_NAME = settings.LIBVIRT_PREFIX + 'insekta'
 
 
 class VMTemplate(models.Model):
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=40)
     memory = models.IntegerField()
     boot_type = models.CharField(max_length=8, default='efi', choices=(('efi', 'EFI boot'), ('mbr', 'MBR boot')))
@@ -36,6 +36,15 @@ class VMTemplate(models.Model):
         return '{}backing-{}-{}.qcow2'.format(settings.LIBVIRT_PREFIX,
                                               resource_name,
                                               self.image_fingerprint)
+
+    def delete_image(self):
+        virtconn = connections['default']
+        pool = virtconn.storagePoolLookupByName(STORAGE_POOL_NAME)
+        try:
+            volume = pool.storageVolLookupByName(self.get_image_filename())
+            volume.undefine()
+        except libvirt.libvirtError:
+            return
 
     @classmethod
     def from_image(cls, resource, name, memory, boot_type, order_id, image_filename):
@@ -82,6 +91,16 @@ class VMTemplate(models.Model):
                 stream.send(data)
 
         return vm_template
+
+    @classmethod
+    def cleanup_unused(cls):
+        unused_templates = cls.objects.filter(resource__isnull=True).annotate(
+            count=models.Count('virtualmachine'))
+        for template in unused_templates:
+            if template.count != 0:
+                continue
+            template.delete_image()
+            template.delete()
 
 
 class ActiveVMResource(models.Model):
