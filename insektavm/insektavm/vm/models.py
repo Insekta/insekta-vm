@@ -96,11 +96,14 @@ class VMTemplate(models.Model):
     def cleanup_unused(cls):
         unused_templates = cls.objects.filter(resource__isnull=True).annotate(
             count=models.Count('virtualmachine'))
+        num_deleted = 0
         for template in unused_templates:
             if template.count != 0:
                 continue
             template.delete_image()
             template.delete()
+            num_deleted += 1
+        return num_deleted
 
 
 class ActiveVMResource(models.Model):
