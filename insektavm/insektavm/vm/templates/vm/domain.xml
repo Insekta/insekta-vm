@@ -20,6 +20,10 @@
         <vmport state='off'/>
     </features>
 
+    <cpu host='host-model'>
+        <model fallback='allow'/>
+    </cpu>
+
     <devices>
         <disk type="file" device="disk">
             <driver name="qemu" type="qcow2"/>
