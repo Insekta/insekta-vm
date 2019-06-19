@@ -20,7 +20,7 @@
         <vmport state='off'/>
     </features>
 
-    <cpu host='host-model'>
+    <cpu mode='host-model'>
         <model fallback='allow'/>
     </cpu>
 
