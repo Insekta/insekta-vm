@@ -20,7 +20,7 @@ class IPv4NetworkField(models.Field):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         if value is None:
             return value
         try:
