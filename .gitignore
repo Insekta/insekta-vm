@@ -2,3 +2,4 @@ __pycache__
 *.pyc
 insektavm/insektavm/settings.py
 insektavm/db.sqlite3
+venv/
