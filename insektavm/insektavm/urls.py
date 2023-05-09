@@ -22,7 +22,7 @@ from insektavm.vpn import apiurls as vpn_apiurls
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('vmadmin/', admin.site.urls),
     path('api/1.0/vm/', include(vm_apiurls)),
     path('api/1.0/vpn/', include(vpn_apiurls))
 ]
