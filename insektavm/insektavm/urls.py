@@ -14,7 +14,7 @@ Including another URLconf
     2. Import the include() function: from django.conf.urls import url, include
     3. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
-from django.conf.urls import url, include
+from django.urls import path, include
 from django.contrib import admin
 
 from insektavm.vm import apiurls as vm_apiurls
@@ -22,7 +22,7 @@ from insektavm.vpn import apiurls as vpn_apiurls
 
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^api/1.0/vm/', include(vm_apiurls)),
-    url(r'^api/1.0/vpn/', include(vpn_apiurls))
+    path('admin/', admin.site.urls),
+    path('api/1.0/vm/', include(vm_apiurls)),
+    path('api/1.0/vpn/', include(vpn_apiurls))
 ]
