@@ -1,2 +1,3 @@
 Django
 libvirt-python
+psycopg2-binary
