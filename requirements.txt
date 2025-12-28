@@ -4,11 +4,14 @@
 #
 #    pip-compile requirements.in
 #
-asgiref==3.10.0
+asgiref==3.11.0
     # via django
-django==5.2.7
+django==6.0
     # via -r requirements.in
-libvirt-python==11.8.0
+libvirt-python==11.10.0
     # via -r requirements.in
-sqlparse==0.5.3
+psycopg2-binary==2.9.11
+    # via -r requirements.in
+sqlparse==0.5.4
     # via django
+
