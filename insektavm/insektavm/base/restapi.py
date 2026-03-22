@@ -2,10 +2,12 @@ import functools
 import json
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from insektavm.base.utils import http_basic_auth
+from insektavm.base.virt import VirtError
+
 
 class ApiError(Exception):
     def __init__(self, message, resp_class=HttpResponse):
@@ -29,5 +31,7 @@ def rest_api(func):
                 raise ValueError('Unexpected return type for API function')
         except ApiError as e:
             return e.resp_class(e.message, content_type='text/plain')
+        except VirtError as e:
+            return JsonResponse({'error': str(e)}, status=503)
 
     return decorator

@@ -8,7 +8,7 @@ from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django.conf import settings
 
-from insektavm.base.virt import connections
+from insektavm.base.virt import connections, VirtError
 from insektavm.base.models import UserToken
 from insektavm.resources.models import Resource
 from insektavm.network.models import NetworkRange, Network
@@ -141,7 +141,15 @@ class ActiveVMResource(models.Model):
         # 2) we want to make sure the object is in the database so others can relate to it.
         self.save()
 
-        self.network.libvirt_create()
+        # If the libvirt connection is down initially, delete the resource and re-raise
+        # If it fails midway, keep the resource for safe cleanup
+        try:
+            self.network.libvirt_create()
+        except VirtError:
+            self.network.in_use = False
+            self.network.save()
+            self.delete()
+            raise
         macs = self.network.get_macs()
         vm_templates = VMTemplate.objects.filter(resource=self.resource).order_by('order_id')
         for vm_template, mac in zip(vm_templates, macs):
@@ -167,6 +175,16 @@ class ActiveVMResource(models.Model):
         self.delete()
 
     def ping(self):
+        if self.is_started:
+            virtconn = connections["default"]
+            for vm in VirtualMachine.objects.filter(vm_resource=self):
+                try:
+                    dom = virtconn.lookupByName(vm.get_domain_name())
+                    if not dom.isActive():
+                        raise VirtError('VM {} is not running'.format(vm.get_domain_name()))
+                except libvirt.libvirtError:
+                    connections.invalidate('default')
+                    raise VirtError("Could not reach KVM host")
         self._ping()
         self.save()
         return self.expire_time
